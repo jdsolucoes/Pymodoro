@@ -2,6 +2,8 @@
 #-*- coding: utf-8 -*-
 import time, pygtk, os, pango, gobject
 
+from modules import db
+
 try:
     import pynotify
     notify = True
@@ -20,7 +22,7 @@ class main:
     
     def __init__(self):
         #tempo a regressar em segundos (padrão 25 minutos) + 1
-        self.tempoSegundos = 16
+        self.tempoSegundos = 1501
         self.rolling = 0
         
         
@@ -36,7 +38,7 @@ class main:
         
         #iniciando visualização de tarefas
         
-        self.listaTarefas = gtk.ListStore(int,str,int)
+        self.listaTarefas = gtk.ListStore(int,str,int,str)
         self.treeTarefas = self.wGui.get_widget('listaTarefas')
         self.treeTarefas.set_model(self.listaTarefas)
         #colunas
@@ -44,30 +46,34 @@ class main:
         
         cell = gtk.CellRendererText()
         
-        id_colum = gtk.TreeViewColumn('ID:')
-        nome_colum = gtk.TreeViewColumn('Tarefa:')
-        pomodoro_colum = gtk.TreeViewColumn('Pomodoros:')
+        #pegando campos da tabela tarefas
+        campos = db.db().get_campos()
+        #iniciando contador
+        n = 0
+        #loop em todos os itens
+        dict = {}
+        for i in campos:
+            
+            #primeira maiuscula....
+            x = i[0].capitalize()
+            
+            
+            dict[x] = gtk.TreeViewColumn(x)
+            dict[x].pack_start(cell,True)
+            dict[x].add_attribute(cell,'text',n)
+            self.treeTarefas.append_column(dict[x])
+            
+            n = n + 1
+            
+
         
-        id_colum.pack_start(cell,True)
-        id_colum.add_attribute(cell,'text',0)
         
-        nome_colum.pack_start(cell,True)
-        nome_colum.add_attribute(cell,'text',1)
-        
-        pomodoro_colum.pack_start(cell,True)
-        pomodoro_colum.add_attribute(cell,'text',2)
-        
-        
-        
-        self.treeTarefas.append_column(id_colum)
-        self.treeTarefas.append_column(nome_colum)
-        self.treeTarefas.append_column(pomodoro_colum)
-        
+        #gerando icone de status....
         self.staticon = gtk.StatusIcon()
         self.staticon.connect("activate", self.activate)
         self.staticon.set_from_file("%s/img/pomodoro.png" % self.filesDir) 
         
-        
+        self.popularLista()
         
         self.staticon.set_visible(True) 
         
@@ -75,11 +81,40 @@ class main:
         signals = {
             'on_janelaPrincipal_destroy' : gtk.main_quit,
             'on_startBotao_clicked' : self.startTimer,
-            'on_stopBotao_clicked' : self.stopTimer
+            'on_stopBotao_clicked' : self.stopTimer,
+            'on_calendario_day_selected' : self.popularLista,
+            'on_addBotao_clicked' : self.addTarefa
             
         }
         self.wGui.signal_autoconnect(signals)
+    
+
+    
+    def addTarefa(self,obj=None):
         
+        tt = self.wGui.get_widget("nomeEntrada").get_text()
+        db.db().insert_tarefa(tt)
+        self.popularLista()
+
+    
+    def popularLista(self,obj=None):
+        cc = self.wGui.get_widget('calendario')
+        
+        year, month, day = cc.get_date()
+        month = month + 1
+        tarefas = db.db().get_lista_tarefas(day,month,year)
+
+        
+        for i in self.listaTarefas:
+            
+            self.listaTarefas.remove(i.iter)
+        for i in tarefas:
+            self.listaTarefas.append(i)
+            pass
+        
+        
+        
+    
     def startTimer(self, *args):
         
         if self.rolling == 0:
