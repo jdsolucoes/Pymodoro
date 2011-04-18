@@ -3,7 +3,7 @@
 import time, pygtk, os, pango, gobject
 
 from modules import db
-
+from modules.playback import play
 try:
     import pynotify
     notify = True
@@ -21,12 +21,28 @@ from gtk import glade
 class main:
     
     def __init__(self):
+        
+        #definir os alarmes...
+        
+        self.alarms = {
+            '2minutes' : 'files/sound/2minuteswarning.wav',
+            'inicio' : 'files/sound/inicio.wav',
+            'alarm' : 'files/sound/alarm.wav',
+            'pausacurta' : 'files/sound/5minutos.wav',
+            'pausalonga' : 'files/sound/pausalonga.wav'
+        }
+        
         #tempo a regressar em segundos (padrão 25 minutos) + 1
         self.tempoSegundos = 1501
+        self.tempoBreak = 301
+        self.tempoBreakLongo = 901
+        self.Pomodoros = 0
+        self.descanso = False
         self.rolling = 0
         
         
-        
+        self.mostrarConcluidos = True
+        self.lockNotify = None
         self.filesDir = os.path.abspath('files')
         self.wGui = glade.XML("%s/gui/main.glade" % self.filesDir)
         self.mainWindow = self.wGui.get_widget('janelaPrincipal')
@@ -38,7 +54,7 @@ class main:
         
         #iniciando visualização de tarefas
         
-        self.listaTarefas = gtk.ListStore(int,str,int,str)
+        self.listaTarefas = gtk.ListStore(int,str,str,int,str)
         self.treeTarefas = self.wGui.get_widget('listaTarefas')
         self.treeTarefas.set_model(self.listaTarefas)
         #colunas
@@ -71,7 +87,8 @@ class main:
         #gerando icone de status....
         self.staticon = gtk.StatusIcon()
         self.staticon.connect("activate", self.activate)
-        self.staticon.set_from_file("%s/img/pomodoro.png" % self.filesDir) 
+        self.staticon.set_from_file("files/img/pomodoro.png")
+        self.staticon.set_tooltip("Pomodoro - Clique para Mostrar/Esconder")
         
         self.popularLista()
         
@@ -79,6 +96,9 @@ class main:
         
         
         signals = {
+            'on_esconderMenu_activate' : self.esconderConcluidos,
+            'on_finalizarMenu_activate' : self.finalizarTarefa,
+            'on_deleteMenu_activate' : self.excluirTarefa,
             'on_janelaPrincipal_destroy' : gtk.main_quit,
             'on_startBotao_clicked' : self.startTimer,
             'on_stopBotao_clicked' : self.stopTimer,
@@ -96,7 +116,26 @@ class main:
         db.db().insert_tarefa(tt)
         self.popularLista()
 
-    
+    def excluirTarefa(self, obj=None):
+        
+        model, iter = self.treeTarefas.get_selection().get_selected()
+        
+        if model and iter:
+            
+            id = model.get_value(iter,0)
+            db.db().remove_tarefa(id)
+            self.popularLista()
+            
+    def finalizarTarefa(self,obj=None):
+        
+        model, iter = self.treeTarefas.get_selection().get_selected()
+        
+        if model and iter:
+            
+            id = model.get_value(iter,0)
+            db.db().update('tarefas',id,concluido='Sim')
+            self.popularLista()
+        
     def popularLista(self,obj=None):
         cc = self.wGui.get_widget('calendario')
         
@@ -108,19 +147,46 @@ class main:
         for i in self.listaTarefas:
             
             self.listaTarefas.remove(i.iter)
-        for i in tarefas:
-            self.listaTarefas.append(i)
-            pass
+        if self.mostrarConcluidos:
+            for i in tarefas:
+                self.listaTarefas.append(i)
+                
+        else:
+            
+            for i in tarefas:
+                
+                if i[1] == 'Sim':
+                    pass
+                else:
+                    self.listaTarefas.append(i)
+                    
         
         
         
     
     def startTimer(self, *args):
-        
-        if self.rolling == 0:
-            self.startTime = time.time() + self.tempoSegundos
+        model, iter = self.treeTarefas.get_selection().get_selected()
+           
+        if self.descanso:
+            
+            if self.Pomodoros > 3:
+                self.Pomodoros = 0
+                self.startTime = time.time() + self.tempoBreakLongo
+            else:
+                
+                self.startTime = time.time() + self.tempoBreak
+                
+            
+            
             self.rolling = gobject.timeout_add(10,self.contar)
-            self.staticon.set_blinking(True)
+        else:   
+            if self.rolling == 0 and model and iter:
+                self.alarm(self.alarms['inicio'])
+                self.lockNotify
+                self.idAtivo = model.get_value(iter,0)
+                self.startTime = time.time() + self.tempoSegundos
+                self.rolling = gobject.timeout_add(10,self.contar)
+                self.staticon.set_blinking(True)
             
             
     def activate(self,obj):
@@ -131,40 +197,70 @@ class main:
             self.mainWindow.show()
             
             
+    def alarm(self,file=None):
+        
+        if file:
+            
+            d = play(file)
+        
+    
         
     def stopTimer(self, obj=None):
-        
-        if obj:
-            
-            self.tempoSegundos = 1500
-        
+
         if self.rolling != 0:
-            
+            self.lockNotify = False
+            self.descanso = False
+            self.staticon.set_from_file("files/img/pomodoro.png")
             gobject.source_remove(self.rolling)
             self.labelClock.set_text("00:00")
             self.startTime = time.time()
             self.rolling = 0
             self.staticon.set_blinking(False) 
             
-            
-    def alarm(self):
-        
-        self.notificar('Acabou o Tempo Negadis')
-        self.stopTimer()
-    
-        
-            
-        self.mainWindow.show()
-        
-    
+
     def notificar(self,msg=None):
         if notify and msg:
             if pynotify.init('Pomodoro'):
                 
-                n = pynotify.Notification('Pomodoro', msg)
+                n = pynotify.Notification('Pomodoro', msg,'files/img/pomodoro.png')
                 n.attach_to_status_icon(self.staticon)
                 n.show()
                 
+    
+    def finalizou(self):
+        
+        self.stopTimer()
+        self.lockNotify = False
+        pomodoros = db.db().get_all('tarefas',id=self.idAtivo)[0][3] + 1
+        if not self.descanso:
+            db.db().update('tarefas',self.idAtivo,pomodoros=pomodoros)
+            self.Pomodoros = self.Pomodoros + 1
+            self.popularLista()
+        
+        if self.descanso:
+            
+            self.staticon.set_from_file("files/img/pomodoro.png")
+            self.notificar('Descanso Acabou, volta a trabalhar vagabundo!')
+            self.alarm(self.alarms['alarm'])
+            self.descanso = False
+        else:
+            self.staticon.set_from_file("files/img/pomodoro-break.png")
+            self.notificar('Iniciando pausa... 5 minutos, corre negada!.')
+            self.alarm(self.alarms['pausacurta'])
+            self.staticon.set_blinking(True) 
+            self.descanso = True
+            self.startTimer()
+        
+    
+    def esconderConcluidos(self,obj=None):
+        
+        if self.mostrarConcluidos == False:
+            self.mostrarConcluidos = True
+        else:
+            self.mostrarConcluidos = False
+        
+        self.popularLista()
+
     
     def contar(self):   
         
@@ -173,11 +269,21 @@ class main:
         
         if int(diferenca) == 0:
             
-            self.alarm()
+            self.finalizou()
             return False
+    
         else:
         
             self.labelClock.set_text("%02i:%02i" % (minutoss,segundos))
+        
+        if int(diferenca) < 120:
+            if self.lockNotify:
+                pass
+            else:
+                self.notificar('Faltam apenas 2 minutos')
+                self.alarm(self.alarms['2minutes'])
+                self.lockNotify = True
+        
         
         return True
         

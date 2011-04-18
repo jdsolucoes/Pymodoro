@@ -45,10 +45,12 @@ class db(backend):
         
         if tarefa:
             
-            self.insert('tarefas',tarefa=tarefa,data=datetime.now(),pomodoros=0)
+            self.insert('tarefas',concluido="Nao",tarefa=tarefa,data=datetime.now(),pomodoros=0)
         
         
-    
+    def update_pomodoro(self,id=None,pomodoro=None):
+        if id and pomodoro:
+            self.update('tarefas',id,pomodoros=pomodoro)
     
     def __del__(self):
         

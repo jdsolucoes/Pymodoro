@@ -34,7 +34,7 @@ class db:
     
     def get_by_date(self,day=None,month=None,year=None):
         
-        sql = "SELECT * FROM `tarefas` WHERE DAY(data) = '%s' AND YEAR(data) = '%s' and MONTH(data) = '%s'" % (day,year,month)
+        sql = "SELECT * FROM `tarefas` WHERE DAY(data) = '%s' AND YEAR(data) = '%s' and MONTH(data) = '%s' ORDER BY id ASC" % (day,year,month)
 
         self.cursor.execute(sql)
         return self.cursor.fetchall()
@@ -68,7 +68,7 @@ class db:
             a = "(%s" % ', '.join("`%s`" % key  for key, value in kwargs.items()) + ')'
             b = "(%s" % ', '.join("'%s'" % value for key,value in kwargs.items()) + ')'
         
-        sql = "INSERT INTO `%s` " % tabela + a + 'VALUES' + b
+        sql = "INSERT INTO `%s` " % tabela + a + ' VALUES ' + b
         try:
             self.cursor.execute(sql)
             return True
