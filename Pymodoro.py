@@ -46,7 +46,11 @@ class main:
         self.filesDir = os.path.abspath('files')
         self.wGui = glade.XML("%s/gui/main.glade" % self.filesDir)
         self.mainWindow = self.wGui.get_widget('janelaPrincipal')
+        
+        #aqui definimos o label que sera responsavel por mostrar o tempo
         self.labelClock = self.wGui.get_widget('labelClock')
+        
+        #aumentamos a fonte
         self.labelClock.modify_font(pango.FontDescription("35"))
         self.labelClock.set_padding(10, 5)
         self.mainWindow.show()
@@ -57,33 +61,19 @@ class main:
         self.listaTarefas = gtk.ListStore(int,str,str,int,str)
         self.treeTarefas = self.wGui.get_widget('listaTarefas')
         self.treeTarefas.set_model(self.listaTarefas)
+        
         #colunas
         
         
         cell = gtk.CellRendererText()
         
-        #pegando campos da tabela tarefas
-        campos = db.db().get_campos()
-        #iniciando contador
-        n = 0
-        #loop em todos os itens
-        dict = {}
-        for i in campos:
-            
-            #primeira maiuscula....
-            x = i[0].capitalize()
-            
-            
-            dict[x] = gtk.TreeViewColumn(x)
-            dict[x].pack_start(cell,True)
-            dict[x].add_attribute(cell,'text',n)
-            self.treeTarefas.append_column(dict[x])
-            
-            n = n + 1
-            
+        tarefaColumn = gtk.TreeViewColumn('Tarefa:')
+        tarefaColumn.pack_start(cell,True)
+        tarefaColumn.add_attribute(cell,'text',2)
+        
+        
+        self.treeTarefas.append_column(tarefaColumn)
 
-        
-        
         #gerando icone de status....
         self.staticon = gtk.StatusIcon()
         self.staticon.connect("activate", self.activate)
@@ -96,6 +86,7 @@ class main:
         
         
         signals = {
+            'on_listaTarefas_cursor_changed' : self.updateInformacoes,
             'on_esconderMenu_activate' : self.esconderConcluidos,
             'on_finalizarMenu_activate' : self.finalizarTarefa,
             'on_deleteMenu_activate' : self.excluirTarefa,
@@ -108,14 +99,16 @@ class main:
         }
         self.wGui.signal_autoconnect(signals)
     
-
     
     def addTarefa(self,obj=None):
         
-        tt = self.wGui.get_widget("nomeEntrada").get_text()
-        db.db().insert_tarefa(tt)
+        tt = self.wGui.get_widget("nomeEntrada")
+        nome = tt.get_text()
+        tt.set_text('')
+        
+        db.db().insert_tarefa(nome)
         self.popularLista()
-
+    
     def excluirTarefa(self, obj=None):
         
         model, iter = self.treeTarefas.get_selection().get_selected()
@@ -135,6 +128,17 @@ class main:
             id = model.get_value(iter,0)
             db.db().update('tarefas',id,concluido='Sim')
             self.popularLista()
+            
+    def marcarDias (self,obj=None):
+        
+        calendario = self.wGui.get_widget('calendario')
+        calendario.clear_marks()
+        year, month, day = calendario.get_date()
+        month += 1
+        dias = db.db().get_by_date(None,month)
+        for i in dias:
+            calendario.mark_day(i[4].day)
+        
         
     def popularLista(self,obj=None):
         cc = self.wGui.get_widget('calendario')
@@ -159,7 +163,7 @@ class main:
                     pass
                 else:
                     self.listaTarefas.append(i)
-                    
+        self.marcarDias()            
         
         
         
@@ -182,7 +186,7 @@ class main:
         else:   
             if self.rolling == 0 and model and iter:
                 self.alarm(self.alarms['inicio'])
-                self.lockNotify
+                self.lockNotify = None
                 self.idAtivo = model.get_value(iter,0)
                 self.startTime = time.time() + self.tempoSegundos
                 self.rolling = gobject.timeout_add(10,self.contar)
@@ -203,13 +207,25 @@ class main:
             
             d = play(file)
         
-    
+    def updateInformacoes(self,obj):
+        
+        model, iter = obj.get_selection().get_selected()
+        
+        if iter:
+            
+            data = model.get_value(iter,4)
+            pomodoros = model.get_value(iter,3)
+            status = model.get_value(iter,1)
+            self.wGui.get_widget('labelData').set_text(data)
+            self.wGui.get_widget('labelPomodoros').set_text(str(pomodoros))
+            self.wGui.get_widget('labelStatus').set_text(status)
         
     def stopTimer(self, obj=None):
 
         if self.rolling != 0:
             self.lockNotify = False
-            self.descanso = False
+            if obj:
+                self.descanso = False
             self.staticon.set_from_file("files/img/pomodoro.png")
             gobject.source_remove(self.rolling)
             self.labelClock.set_text("00:00")
@@ -239,11 +255,14 @@ class main:
         
         if self.descanso:
             
+            
             self.staticon.set_from_file("files/img/pomodoro.png")
             self.notificar('Descanso Acabou, volta a trabalhar vagabundo!')
             self.alarm(self.alarms['alarm'])
+            
             self.descanso = False
         else:
+            
             self.staticon.set_from_file("files/img/pomodoro-break.png")
             self.notificar('Iniciando pausa... 5 minutos, corre negada!.')
             self.alarm(self.alarms['pausacurta'])
@@ -280,9 +299,12 @@ class main:
             if self.lockNotify:
                 pass
             else:
-                self.notificar('Faltam apenas 2 minutos')
-                self.alarm(self.alarms['2minutes'])
-                self.lockNotify = True
+                if self.descanso:
+                    self.lockNotify = True
+                else:
+                    self.notificar('Faltam apenas 2 minutos')
+                    self.alarm(self.alarms['2minutes'])
+                    self.lockNotify = True
         
         
         return True

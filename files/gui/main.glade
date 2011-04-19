@@ -4,6 +4,7 @@
   <!-- interface-naming-policy project-wide -->
   <widget class="GtkWindow" id="janelaPrincipal">
     <property name="title" translatable="yes">Pymodoro - Gerenciador Suculento</property>
+    <property name="resizable">False</property>
     <property name="window_position">center</property>
     <property name="icon">../img/pomodoro.png</property>
     <signal name="destroy" handler="on_janelaPrincipal_destroy"/>
@@ -186,18 +187,99 @@
           <widget class="GtkVBox" id="vbox3">
             <property name="visible">True</property>
             <child>
-              <widget class="GtkTreeView" id="listaTarefas">
-                <property name="height_request">250</property>
+              <widget class="GtkTable" id="table1">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="border_width">2</property>
+                <property name="n_rows">3</property>
+                <property name="n_columns">2</property>
+                <property name="column_spacing">2</property>
+                <property name="row_spacing">2</property>
+                <child>
+                  <widget class="GtkLabel" id="label2">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.49000000953674316</property>
+                    <property name="ypad">5</property>
+                    <property name="label" translatable="yes">Data:</property>
+                    <property name="justify">right</property>
+                    <property name="single_line_mode">True</property>
+                  </widget>
+                </child>
+                <child>
+                  <widget class="GtkLabel" id="label3">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="ypad">5</property>
+                    <property name="label" translatable="yes">Pomodoros:</property>
+                  </widget>
+                  <packing>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="GtkLabel" id="labelData">
+                    <property name="visible">True</property>
+                  </widget>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="GtkLabel" id="labelPomodoros">
+                    <property name="visible">True</property>
+                  </widget>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="GtkLabel" id="label4">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Concluido:</property>
+                  </widget>
+                  <packing>
+                    <property name="top_attach">2</property>
+                    <property name="bottom_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="GtkLabel" id="labelStatus">
+                    <property name="visible">True</property>
+                    <property name="xalign">0.54000002145767212</property>
+                  </widget>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">2</property>
+                    <property name="bottom_attach">3</property>
+                  </packing>
+                </child>
               </widget>
               <packing>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
+              <widget class="GtkTreeView" id="listaTarefas">
+                <property name="height_request">250</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <signal name="cursor_changed" handler="on_listaTarefas_cursor_changed"/>
+              </widget>
+              <packing>
+                <property name="position">-1</property>
+              </packing>
+            </child>
+            <child>
               <widget class="GtkHBox" id="hbox2">
                 <property name="visible">True</property>
+                <property name="spacing">2</property>
                 <child>
                   <widget class="GtkButton" id="addBotao">
                     <property name="label" translatable="yes">Adicionar</property>
@@ -239,7 +321,7 @@
                 </child>
               </widget>
               <packing>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </widget>

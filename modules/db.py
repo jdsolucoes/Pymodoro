@@ -47,7 +47,12 @@ class db(backend):
             
             self.insert('tarefas',concluido="Nao",tarefa=tarefa,data=datetime.now(),pomodoros=0)
         
+    def get_tarefas_mes(self,month=None):
         
+        if month:
+            
+            self.get_all
+            
     def update_pomodoro(self,id=None,pomodoro=None):
         if id and pomodoro:
             self.update('tarefas',id,pomodoros=pomodoro)

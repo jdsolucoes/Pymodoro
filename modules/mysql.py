@@ -34,7 +34,23 @@ class db:
     
     def get_by_date(self,day=None,month=None,year=None):
         
-        sql = "SELECT * FROM `tarefas` WHERE DAY(data) = '%s' AND YEAR(data) = '%s' and MONTH(data) = '%s' ORDER BY id ASC" % (day,year,month)
+        """Recives an day, month and year and returns everything that founds"""
+        
+        sql = "SELECT * FROM `tarefas` WHERE "
+        termo = []
+        if day:
+            termo.append("DAY(data) = '%s'" % day)
+        if year:
+            termo.append("YEAR(data) = '%s'" % year)
+        if month:    
+            termo.append("MONTH(data) = '%s'" % month)
+            
+        query = " AND ".join(termo)
+        sql += query
+        sql += " ORDER BY id ASC"
+
+        #self.cursor.execute(sql)
+        
 
         self.cursor.execute(sql)
         return self.cursor.fetchall()
