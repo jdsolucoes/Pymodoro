@@ -21,39 +21,34 @@ class db(backend):
         if not self.connect():
             exit('Erro ao conectar ao DB')
         
-    def get_campos(self):
+    def getFields(self):
         
         self.cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='tarefas'")
         return self.cursor.fetchall()
         
-    def get_lista_tarefas(self,day,month,year):
+    def getListOfTasks(self,day,month,year):
         
         if day and month and year:
             
-            return self.get_by_date(day,month,year)
+            return self.getByDate(day,month,year)
             
         else:
             return none
     
-    def remove_tarefa(self,id=None):
+    def removeTask(self,id=None):
         
         if id:
             self.remove('tarefas',id)
             
     
-    def insert_tarefa(self,tarefa=None):
+    def newTask(self,tarefa=None):
         
         if tarefa:
             
             self.insert('tarefas',concluido="Nao",tarefa=tarefa,data=datetime.now(),pomodoros=0)
         
-    def get_tarefas_mes(self,month=None):
-        
-        if month:
             
-            self.get_all
-            
-    def update_pomodoro(self,id=None,pomodoro=None):
+    def updatePomodoro(self,id=None,pomodoro=None):
         if id and pomodoro:
             self.update('tarefas',id,pomodoros=pomodoro)
     

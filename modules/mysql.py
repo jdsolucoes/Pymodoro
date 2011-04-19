@@ -7,7 +7,7 @@ import MySQLdb
 class db:
     
     def connect(self):
-        
+        #try to connect to the database, here, mysql.
         try:
             self.db = MySQLdb.connect(
                 self.db_config['host'],
@@ -21,18 +21,18 @@ class db:
             
             return False
         
-    def get_all(self,tabela=None, **kwarg):
+    def getAll(self,table=None, **kwarg):
         
-        if tabela:
-            chave = kwarg.keys()[0]
-            valor = kwarg[chave]
-            sql = "SELECT * FROM `%s` WHERE %s = '%s'" % (tabela,chave,valor)
+        if table:
+            key = kwarg.keys()[0]
+            valor = kwarg[key]
+            sql = "SELECT * FROM `%s` WHERE %s = '%s'" % (table,key,valor)
             
             self.cursor.execute(sql)
             
             return self.cursor.fetchall()
     
-    def get_by_date(self,day=None,month=None,year=None):
+    def getByDate(self,day=None,month=None,year=None):
         
         """Recives an day, month and year and returns everything that founds"""
         
@@ -49,13 +49,10 @@ class db:
         sql += query
         sql += " ORDER BY id ASC"
 
-        #self.cursor.execute(sql)
-        
-
         self.cursor.execute(sql)
         return self.cursor.fetchall()
         
-    def update(self,tabela=None,id=None,**kwargs):
+    def update(self,table=None,id=None,**kwargs):
         
         arg = {}
         arg.update(kwargs)
@@ -66,25 +63,25 @@ class db:
 
         where = ' WHERE id = %s' % id
 
-        sql = ''.join(["UPDATE `%s` " % tabela,a,where])
+        sql = ''.join(["UPDATE `%s` " % table,a,where])
         self.cursor.execute(sql)
     
-    def remove(self,tabela=None,id=None):
+    def remove(self,table=None,id=None):
         
-        if id and tabela:
+        if id and table:
             
-            self.cursor.execute("DELETE FROM `%s` WHERE `id` = %s" % (tabela,id))
+            self.cursor.execute("DELETE FROM `%s` WHERE `id` = %s" % (table,id))
             
                 
             
-    def insert(self,tabela=None,**kwargs):
+    def insert(self,table=None,**kwargs):
         
         for key,value in kwargs.items():
             
             a = "(%s" % ', '.join("`%s`" % key  for key, value in kwargs.items()) + ')'
             b = "(%s" % ', '.join("'%s'" % value for key,value in kwargs.items()) + ')'
         
-        sql = "INSERT INTO `%s` " % tabela + a + ' VALUES ' + b
+        sql = "INSERT INTO `%s` " % table + a + ' VALUES ' + b
         try:
             self.cursor.execute(sql)
             return True
@@ -94,14 +91,12 @@ class db:
         
     def disconnect(self):
         
-        """Fechamos a conexão com o Banco de Dados"""
+        """Close the connection with the database"""
         
         self.cursor.close()
         self.db.close()
         
         
-    def select_from(self,*args):
-        
-        pass
+
         
         
