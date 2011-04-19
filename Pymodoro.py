@@ -47,7 +47,7 @@ class main:
         self.wGui = glade.XML("%s/gui/main.glade" % self.filesDir)
         self.mainWindow = self.wGui.get_widget('janelaPrincipal')
         self.labelClock = self.wGui.get_widget('labelClock')
-        self.labelClock.modify_font(pango.FontDescription("27"))
+        self.labelClock.modify_font(pango.FontDescription("35"))
         self.labelClock.set_padding(10, 5)
         self.mainWindow.show()
         
