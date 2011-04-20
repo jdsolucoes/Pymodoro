@@ -41,6 +41,7 @@ class main:
         #set pomodoros, if it gets to FOUR enables the full_break_time
         self.pomodoros = 0
         self.time_break = False
+        self.full_break = False
         self.thread_pid = 0
         #show or not the tasks tagged as done
         self.show_done_tasks = True
@@ -54,7 +55,7 @@ class main:
         #here we defined the label that wiill show the time
         self.label_clock = self.w_gui.get_widget('labelClock')
         
-        #big fatt ass font.
+        #big fat ass font.
         self.label_clock.modify_font(pango.FontDescription("35"))
         self.label_clock.set_padding(10, 5)
         self.main_window.show()
@@ -67,7 +68,6 @@ class main:
         
         
         cell = gtk.CellRendererText()
-        
         task_column = gtk.TreeViewColumn('Tarefa:')
         task_column.pack_start(cell,True)
         task_column.add_attribute(cell,'text',2)
@@ -91,6 +91,7 @@ class main:
             'on_esconderMenu_activate' : self.hideDoneTasks,
             'on_finalizarMenu_activate' : self.setTaskDone,
             'on_deleteMenu_activate' : self.excluirTarefa,
+            'on_imagemenuitem5_activate' : gtk.main_quit,
             'on_janelaPrincipal_destroy' : gtk.main_quit,
             'on_startBotao_clicked' : self.startTimer,
             'on_stopBotao_clicked' : self.stopTimer,
@@ -103,6 +104,9 @@ class main:
     
     def addTarefa(self,obj=None):
         
+        """Get the name of the task from a GTK.entry
+        and calls db().newTask()"""
+        
         tt = self.w_gui.get_widget("nomeEntrada")
         nome = tt.get_text()
         tt.set_text('')
@@ -113,6 +117,8 @@ class main:
         return None
     
     def excluirTarefa(self, obj=None):
+        
+        
         
         model, iter = self.tree_tasks.get_selection().get_selected()
         
@@ -180,16 +186,15 @@ class main:
            
         if self.time_break:
             
-            if self.pomodoros > 3:
-                self.pomodoros = 0
+            if self.full_break:
+                self.full_break = False
                 self.startTime = time.time() + self.full_break_time
             else:
-                
+                self.time_break = False
                 self.startTime = time.time() + self.half_break_time
                 
-            
-            
             self.thread_pid = gobject.timeout_add(10,self.run)
+            
         else:   
             if self.thread_pid == 0 and model and iter:
                 self.alarm(self.alarms['inicio'])
@@ -197,10 +202,11 @@ class main:
                 self.idAtivo = model.get_value(iter,0)
                 self.startTime = time.time() + self.time_seconds
                 self.thread_pid = gobject.timeout_add(10,self.run)
-                self.staticon.set_blinking(True)
+                self.changeIcon('Normal',True)
             
             
     def activate(self,obj):
+        
         if (self.main_window.flags() & gtk.VISIBLE) != 0:
             
             self.main_window.hide()
@@ -233,15 +239,16 @@ class main:
             self.lock_notify = False
             if obj:
                 self.time_break = False
-            self.staticon.set_from_file("files/img/pomodoro.png")
+            self.changeIcon('Normal')
             gobject.source_remove(self.thread_pid)
             self.label_clock.set_text("00:00")
             self.startTime = time.time()
             self.thread_pid = 0
-            self.staticon.set_blinking(False) 
+            
             
 
     def notifyIt(self,msg=None):
+        
         if notify and msg:
             if pynotify.init('Pymodoro'):
                 
@@ -254,31 +261,61 @@ class main:
             
             return None
                 
-    
+    def changeIcon(self,icon=None,blinking=None):
+        
+        if icon:
+            if icon == 'Normal':
+                self.staticon.set_from_file("files/img/pomodoro.png")
+                
+            elif icon == 'Break':
+                self.staticon.set_from_file("files/img/pomodoro-break.png")
+                
+            else:
+                return None
+            
+            if blinking:
+                
+                self.staticon.set_blinking(True)
+            
+            else:
+                self.staticon.set_blinking(False)
+                
+            return True
+        
     def finished(self):
+        
+        
+        """Here we define what will happen when the clocks hits 0"""
+        
         
         self.stopTimer()
         self.lock_notify = False
-        pomodoros = db().getAll('tarefas',id=self.idAtivo)[0][3] + 1
-        if not self.time_break:
-            db().update('tarefas',self.idAtivo,pomodoros=pomodoros)
-            self.pomodoros = self.pomodoros + 1
-            self.populateTaskList()
+        
         
         if self.time_break:
             
+            if self.pomodoros > 3:
+                self.full_break = True
+                self.pomodoros = 0
+            else:
+                self.pomodoros += 1
+                
             
-            self.staticon.set_from_file("files/img/pomodoro.png")
+            self.changeIcon('Normal')
             self.notifyIt('Descanso Acabou, volta a trabalhar vagabundo!')
             self.alarm(self.alarms['alarm'])
             
             self.time_break = False
         else:
             
-            self.staticon.set_from_file("files/img/pomodoro-break.png")
+            pomodoros = db().getPomodoros(self.idAtivo) + 1
+            self.w_gui.get_widget('labelPomodoros').set_text(str(pomodoros))
+            db().update('tarefas',self.idAtivo,pomodoros=pomodoros)
+            self.pomodoros = self.pomodoros + 1
+            
+            self.changeIcon('Break',True)
             self.notifyIt('Iniciando pausa... 5 minutos, corre negada!.')
             self.alarm(self.alarms['pausacurta'])
-            self.staticon.set_blinking(True) 
             self.time_break = True
             self.startTimer()
         
@@ -295,19 +332,20 @@ class main:
     
     def run(self):   
         
-        diferenca =  self.startTime - time.time()
-        (minutoss, segundos) = divmod(diferenca, 60.0)
+        diff_time =  self.startTime - time.time()
+        (minutes, seconds) = divmod(diff_time, 60.0)
         
-        if int(diferenca) == 0:
+        if int(diff_time) == 0:
             
             self.finished()
             return False
     
         else:
         
-            self.label_clock.set_text("%02i:%02i" % (minutoss,segundos))
+            self.label_clock.set_text("%02i:%02i" % (minutes,seconds))
         
-        if int(diferenca) < 120:
+        if int(diff_time) < 120:
+            
             if self.lock_notify:
                 pass
             else:

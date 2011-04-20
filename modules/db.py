@@ -47,7 +47,19 @@ class db(backend):
             
             self.insert('tarefas',concluido="Nao",tarefa=tarefa,data=datetime.now(),pomodoros=0)
         
+    def getPomodoros(self,id=None):
+        
+        """Return the amount of pomodoros of that task"""
+        
+        if id:
             
+            c = self.getAll('tarefas',id=id)[0][3]
+            
+            return c
+        else:
+            return None
+        
+        
     def updatePomodoro(self,id=None,pomodoro=None):
         if id and pomodoro:
             self.update('tarefas',id,pomodoros=pomodoro)
