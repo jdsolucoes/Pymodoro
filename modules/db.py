@@ -21,12 +21,10 @@ class db(backend):
         if not self.connect():
             exit('Erro ao conectar ao DB')
         
-    def getFields(self):
-        
-        self.cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='tarefas'")
-        return self.cursor.fetchall()
         
     def getListOfTasks(self,day,month,year):
+        
+        """Return a list of tasks"""
         
         if day and month and year:
             
@@ -37,11 +35,15 @@ class db(backend):
     
     def removeTask(self,id=None):
         
+        """"Remove a task"""
+        
         if id:
             self.remove('tarefas',id)
             
     
     def newTask(self,tarefa=None):
+        
+        """Create a new Task"""
         
         if tarefa:
             
@@ -61,6 +63,8 @@ class db(backend):
         
         
     def updatePomodoro(self,id=None,pomodoro=None):
+        """Update the amount of pomodoros of a task"""
+        
         if id and pomodoro:
             self.update('tarefas',id,pomodoros=pomodoro)
     

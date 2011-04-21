@@ -33,7 +33,7 @@ class main:
         }
         
         #the default time in seconds, 25*60=1500 + 1
-        self.time_seconds = 15
+        self.time_seconds = 1501
         #half break (or 5 minutes break) 300s + 1
         self.half_break_time = 301
         self.full_break_time = 901
@@ -90,7 +90,7 @@ class main:
             'on_listaTarefas_cursor_changed' : self.updateInfo,
             'on_esconderMenu_activate' : self.hideDoneTasks,
             'on_finalizarMenu_activate' : self.setTaskDone,
-            'on_deleteMenu_activate' : self.excluirTarefa,
+            'on_deleteMenu_activate' : self.deleteTask,
             'on_imagemenuitem5_activate' : gtk.main_quit,
             'on_janelaPrincipal_destroy' : gtk.main_quit,
             'on_startBotao_clicked' : self.startTimer,
@@ -108,16 +108,23 @@ class main:
         and calls db().newTask()"""
         
         tt = self.w_gui.get_widget("nomeEntrada")
-        nome = tt.get_text()
-        tt.set_text('')
         
-        db().newTask(nome)
-        self.populateTaskList()
+        nome = tt.get_text()
+        if nome != '':
+            db().newTask(nome)
+            self.notifyIt("Tarefa: '%s' Adicionada." % nome)
+            self.populateTaskList()
+            tt.set_text('')
+        else:
+            self.notifyIt('Nome de Tarefa Inválido')
         
         return None
     
-    def excluirTarefa(self, obj=None):
+    def deleteTask(self, obj=None):
         
+        """
+        Get the current selected task and remove it
+        """
         
         
         model, iter = self.tree_tasks.get_selection().get_selected()
@@ -134,6 +141,10 @@ class main:
             
     def setTaskDone(self,obj=None):
         
+        """
+        Set the current task as done
+        """
+        
         model, iter = self.tree_tasks.get_selection().get_selected()
         
         if model and iter:
@@ -143,6 +154,10 @@ class main:
             self.populateTaskList()
             
     def markDays (self,obj=None):
+        
+        """
+        Get all days that have tasks within and mark them on the calendar
+        """
         
         calendario = self.w_gui.get_widget('calendario')
         calendario.clear_marks()
@@ -154,6 +169,12 @@ class main:
         
         
     def populateTaskList(self,obj=None):
+        
+        """
+        Populate the taks list
+        and then calls self.markDays()
+        """
+        
         cc = self.w_gui.get_widget('calendario')
         
         year, month, day = cc.get_date()
@@ -182,6 +203,11 @@ class main:
         
     
     def startTimer(self, *args):
+        
+        """
+        Start the fucking timer....
+        """
+        
         model, iter = self.tree_tasks.get_selection().get_selected()
            
         if self.time_break:
@@ -207,6 +233,8 @@ class main:
             
     def activate(self,obj):
         
+        """Stupid ass name, i know, shame on me"""
+        
         if (self.main_window.flags() & gtk.VISIBLE) != 0:
             
             self.main_window.hide()
@@ -216,11 +244,17 @@ class main:
             
     def alarm(self,file=None):
         
+        """Play a sound file"""
+        
         if file:
             
             d = play(file)
         
     def updateInfo(self,obj):
+        
+        """Get the Info from the list and then update the
+        labels, date, pomodoros etc...
+        """
         
         model, iter = obj.get_selection().get_selected()
         
@@ -235,6 +269,7 @@ class main:
         
     def stopTimer(self, obj=None):
 
+        """Stop the timer"""
         if self.thread_pid != 0:
             self.lock_notify = False
             if obj:
@@ -249,10 +284,12 @@ class main:
 
     def notifyIt(self,msg=None):
         
+        """Use pynotify to emit a notification, looks great in ubuntu"""
+        
         if notify and msg:
             if pynotify.init('Pymodoro'):
                 
-                n = pynotify.Notification('pomodoro', msg,'files/img/pomodoro.png')
+                n = pynotify.Notification('PYmodoro', msg,'files/img/pomodoro.png')
                 n.attach_to_status_icon(self.staticon)
                 n.show()
                 
@@ -262,6 +299,10 @@ class main:
             return None
                 
     def changeIcon(self,icon=None,blinking=None):
+        
+        """Use the change the status of the icon, blinking or not, Normal or
+        break time"""
+        
         
         if icon:
             if icon == 'Normal':
@@ -322,6 +363,8 @@ class main:
     
     def hideDoneTasks(self,obj=None):
         
+        """Hidden the tasks tagged as done"""
+        
         if self.show_done_tasks == False:
             self.show_done_tasks = True
         else:
@@ -331,6 +374,8 @@ class main:
 
     
     def run(self):   
+        
+        """the function that holds the clock itself"""
         
         diff_time =  self.startTime - time.time()
         (minutes, seconds) = divmod(diff_time, 60.0)

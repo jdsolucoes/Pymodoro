@@ -1,10 +1,13 @@
 #!/usr/bin/env python2.6
 #-*- coding: utf-8 -*-
 
+#The Sql generator, stand on yout motherfucker feet.
 
 class AbstractSQL:
         
     def getAll(self,table=None, **kwarg):
+        
+        """GOGOHORSE"""
         
         if table:
             key = kwarg.keys()[0]
@@ -37,6 +40,8 @@ class AbstractSQL:
         
     def update(self,table=None,id=None,**kwargs):
         
+        """Receives a table name, the ID and the data to change"""
+        
         arg = {}
         arg.update(kwargs)
 
@@ -51,6 +56,8 @@ class AbstractSQL:
     
     def remove(self,table=None,id=None):
         
+        """Receives a table and ID and remove it"""
+        
         if id and table:
             
             self.cursor.execute("DELETE FROM `%s` WHERE `id` = %s" % (table,id))
@@ -58,6 +65,8 @@ class AbstractSQL:
                 
             
     def insert(self,table=None,**kwargs):
+        
+        """Insert data in to the DB, receives a table and the data namecolumn=datatostore"""
         
         for key,value in kwargs.items():
             

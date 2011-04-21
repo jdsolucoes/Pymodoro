@@ -2,7 +2,7 @@
 #-*- coding: utf-8 -*-
 
 
-#configuração do mysql
+#Configuratio of the app
 
 
 

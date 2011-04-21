@@ -140,6 +140,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip" translatable="yes">Iniciar um Pomodoro.</property>
                     <signal name="clicked" handler="on_startBotao_clicked"/>
                   </widget>
                   <packing>
@@ -161,6 +162,8 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip" translatable="yes">Parar o pomodoro, lembre-se
+não existe meio pomodoro.</property>
                     <signal name="clicked" handler="on_stopBotao_clicked"/>
                   </widget>
                   <packing>
@@ -223,6 +226,7 @@
                 <child>
                   <widget class="GtkLabel" id="labelPomodoros">
                     <property name="visible">True</property>
+                    <property name="tooltip" translatable="yes">Numero de Pomodoros.</property>
                   </widget>
                   <packing>
                     <property name="left_attach">1</property>
@@ -245,6 +249,7 @@
                 <child>
                   <widget class="GtkLabel" id="labelStatus">
                     <property name="visible">True</property>
+                    <property name="tooltip" translatable="yes">Status da Tarefa.</property>
                     <property name="xalign">0.54000002145767212</property>
                   </widget>
                   <packing>
@@ -281,6 +286,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip" translatable="yes">Botão de adicionar.</property>
                     <signal name="clicked" handler="on_addBotao_clicked"/>
                   </widget>
                   <packing>
@@ -303,6 +309,7 @@
                       <widget class="GtkEntry" id="nomeEntrada">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip" translatable="yes">Digite o nome da nova tarefa.</property>
                         <property name="invisible_char">•</property>
                       </widget>
                       <packing>
