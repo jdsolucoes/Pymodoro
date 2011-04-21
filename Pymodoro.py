@@ -1,10 +1,25 @@
 #!/usr/bin/env python2.6
 #-*- coding: utf-8 -*-
+#   This file is part of Pymodoro.
+
+#   Pymodoro is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation.
+
+#   Pymodoro is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License
+#    along with Pymodoro.  If not, see <http://www.gnu.org/licenses/>.
+
 import time, pygtk, os, pango, gobject
 
 from modules.db import db
 from modules.playback import play
 import datetime
+
 try:
     import pynotify
     notify = True
@@ -66,6 +81,8 @@ class main:
         self.list_tasks = gtk.ListStore(int,int,str,int,str)
         self.tree_tasks = self.w_gui.get_widget('listaTarefas')
         self.tree_tasks.set_model(self.list_tasks)
+        #self.tree_tasks.connect('button_press_event',self.menuPopup)
+        self.tree_tasks.set_search_column(2)
 
         
         cell = gtk.CellRendererText()
@@ -160,6 +177,19 @@ class main:
                 db().update('tarefas',id,concluido=1)
             self.populateTaskList()
             
+    def menuPopup(self,obj, event):
+        
+        if event.button != 3:
+            pass
+        else:
+            
+            m = gtk.Menu()
+            i = gtk.MenuItem("Hello",self.deleteTask)
+            i.show()
+            m.append(i)
+            m.popup(None, None, None, event.button, event.time, None)
+            return False
+        
     def markDays (self,obj=None):
         
         """
