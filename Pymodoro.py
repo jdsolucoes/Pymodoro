@@ -97,9 +97,9 @@ class main:
 
         #systray icon
         self.staticon = gtk.StatusIcon()
-        self.staticon.connect("activate", self.activate)
+        self.staticon.connect("button_press_event", self.activate)
         self.staticon.set_from_file("files/img/pomodoro.png")
-        self.staticon.set_tooltip("pomodoro - Clique para Mostrar/Esconder")
+        self.staticon.set_tooltip("Pymodoro - Clique para Mostrar/Esconder")
         
         self.populateTaskList()
         
@@ -263,15 +263,17 @@ class main:
                 self.changeIcon('Normal',True)
             
             
-    def activate(self,obj):
+    def activate(self,obj,event):
         
         """Stupid ass name, i know, shame on me"""
-        
-        if (self.main_window.flags() & gtk.VISIBLE) != 0:
-            
-            self.main_window.hide()
+        if event.button == 3:
+            self.stopTimer()
         else:
-            self.main_window.show()
+            if (self.main_window.flags() & gtk.VISIBLE) != 0:
+            
+                self.main_window.hide()
+            else:
+                self.main_window.show()
             
             
     def alarm(self,file=None):
@@ -429,6 +431,7 @@ class main:
         else:
         
             self.label_clock.set_text("%02i:%02i" % (minutes,seconds))
+            
         
         if int(diff_time) < 120:
             
