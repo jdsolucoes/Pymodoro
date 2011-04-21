@@ -4,6 +4,7 @@ import time, pygtk, os, pango, gobject
 
 from modules.db import db
 from modules.playback import play
+import datetime
 try:
     import pynotify
     notify = True
@@ -62,15 +63,17 @@ class main:
         
         
         #the list itself.
-        self.list_tasks = gtk.ListStore(int,str,str,int,str)
+        self.list_tasks = gtk.ListStore(int,int,str,int,str)
         self.tree_tasks = self.w_gui.get_widget('listaTarefas')
         self.tree_tasks.set_model(self.list_tasks)
-        
+
         
         cell = gtk.CellRendererText()
+        cell.set_property('strikethrough' , True)
         task_column = gtk.TreeViewColumn('Tarefa:')
         task_column.pack_start(cell,True)
         task_column.add_attribute(cell,'text',2)
+        task_column.set_attributes(cell,text=2,strikethrough=1)
         
         
         self.tree_tasks.append_column(task_column)
@@ -142,7 +145,7 @@ class main:
     def setTaskDone(self,obj=None):
         
         """
-        Set the current task as done
+        Set the current task as done/todo
         """
         
         model, iter = self.tree_tasks.get_selection().get_selected()
@@ -150,7 +153,11 @@ class main:
         if model and iter:
             
             id = model.get_value(iter,0)
-            db().update('tarefas',id,concluido='Sim')
+            fineshed = model.get_value(iter,1)
+            if fineshed == 1:
+                db().update('tarefas',id,concluido=0)
+            else:
+                db().update('tarefas',id,concluido=1)
             self.populateTaskList()
             
     def markDays (self,obj=None):
@@ -178,25 +185,20 @@ class main:
         cc = self.w_gui.get_widget('calendario')
         
         year, month, day = cc.get_date()
+        #the gtk calendar aways return the month wrong, adding 1... POG?
         month = month + 1
         tasks = db().getListOfTasks(day,month,year)
         
-        
+        #remove all items on the list
         for i in self.list_tasks:
-            
             self.list_tasks.remove(i.iter)
-        if self.show_done_tasks:
-            for i in tasks:
-                self.list_tasks.append(i)
-                
-        else:
             
-            for i in tasks:
-                
-                if i[1] == 'Sim':
-                    pass
-                else:
-                    self.list_tasks.append(i)
+        #append new ones.
+        for i in tasks:
+            if not self.show_done_tasks and i[1] ==1:
+                pass
+            else:
+                self.list_tasks.append(i)
         self.markDays()            
         
         
@@ -260,12 +262,21 @@ class main:
         
         if iter:
             
-            data = model.get_value(iter,4)
-            pomodoros = model.get_value(iter,3)
-            status = model.get_value(iter,1)
+            
+            
+            id = model.get_value(iter,0)
+            row = db().getByID(id)
+            data = datetime.datetime.strftime(row[4],'%d/%m/%Y')
             self.w_gui.get_widget('labelData').set_text(data)
-            self.w_gui.get_widget('labelPomodoros').set_text(str(pomodoros))
-            self.w_gui.get_widget('labelStatus').set_text(status)
+            self.w_gui.get_widget('labelPomodoros').set_text(str(row[3]))
+            status = row[1]
+            
+            if status == 1:
+                self.w_gui.get_widget('labelStatus').set_text('Sim')
+            else:
+                self.w_gui.get_widget('labelStatus').set_text('Não')
+                
+        
         
     def stopTimer(self, obj=None):
 
@@ -289,7 +300,7 @@ class main:
         if notify and msg:
             if pynotify.init('Pymodoro'):
                 
-                n = pynotify.Notification('PYmodoro', msg,'files/img/pomodoro.png')
+                n = pynotify.Notification('Pymodoro', msg,'files/img/pomodoro.png')
                 n.attach_to_status_icon(self.staticon)
                 n.show()
                 

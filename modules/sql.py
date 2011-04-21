@@ -18,6 +18,18 @@ class AbstractSQL:
             
             return self.cursor.fetchall()
     
+    def getByID(self,id=None):
+        
+        if id:
+            
+            self.cursor.execute("SELECT * FROM `tarefas` WHERE id = '%s' " % id )
+            
+            return self.cursor.fetchone()
+            
+            
+            
+            
+        
     def getByDate(self,day=None,month=None,year=None):
         
         """Recives an day, month and year and returns everything that founds"""

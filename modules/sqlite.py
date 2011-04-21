@@ -23,7 +23,7 @@ class db(AbstractSQL):
                     exit('Erro ao criar diretorio')
             
             self.cursor = self.conn.cursor()
-            self.cursor.execute("CREATE TABLE IF NOT EXISTS tarefas(id INTEGER PRIMARY KEY, concluido text, tarefa text, pomodoros int, data timestamp )")
+            self.cursor.execute("CREATE TABLE IF NOT EXISTS tarefas(id INTEGER PRIMARY KEY, concluido int, tarefa text, pomodoros int, data timestamp )")
             
             return True
         except:

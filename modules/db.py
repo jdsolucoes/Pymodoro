@@ -47,7 +47,7 @@ class db(backend):
         
         if tarefa:
             
-            self.insert('tarefas',concluido="Nao",tarefa=tarefa,data=datetime.now(),pomodoros=0)
+            self.insert('tarefas',concluido=0,tarefa=tarefa,data=datetime.now(),pomodoros=0)
         
     def getPomodoros(self,id=None):
         
