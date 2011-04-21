@@ -7,7 +7,7 @@
 
 
 db_config = {
-    'backend' : 'mysql', #mysql ou sqlite 
+    'backend' : 'sqlite', #mysql ou sqlite 
     'user' : 'pymodoro',
     'password' : 'JBHhW9JCmZSzm79a',
     'host' : 'localhost',

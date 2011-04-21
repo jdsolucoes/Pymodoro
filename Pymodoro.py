@@ -33,7 +33,7 @@ class main:
         }
         
         #the default time in seconds, 25*60=1500 + 1
-        self.time_seconds = 1501
+        self.time_seconds = 15
         #half break (or 5 minutes break) 300s + 1
         self.half_break_time = 301
         self.full_break_time = 901
@@ -159,7 +159,7 @@ class main:
         year, month, day = cc.get_date()
         month = month + 1
         tasks = db().getListOfTasks(day,month,year)
-
+        
         
         for i in self.list_tasks:
             
@@ -170,7 +170,7 @@ class main:
                 
         else:
             
-            for i in tasjs:
+            for i in tasks:
                 
                 if i[1] == 'Sim':
                     pass
