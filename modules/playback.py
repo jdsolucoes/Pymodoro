@@ -15,22 +15,22 @@
 #    along with Pymodoro.  If not, see <http://www.gnu.org/licenses/>.
 
 import time
-import alsaaudio
-from th import Async
+import commands
 
+import threading
+import gtk
 
-@Async
-def play (file=None):
-    card = 'default'
-    f = open(file,'rb')
-    saida = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK,card=card)
-    saida.setchannels(1)
-    saida.setrate(44100)
-    saida.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-    saida.setperiodsize(160)
-    data = f.read()
-    saida.write(data)
-    return None
+class play(threading.Thread):
+    
+    def play(self,file=None):
+        if file:
+            self.file = file
+        self.start()
+        
+    def run (self):
+        
+        d = commands.getoutput('mplayer -quiet %s' % self.file)
+        
     
 
     

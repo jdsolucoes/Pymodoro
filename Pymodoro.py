@@ -20,6 +20,7 @@ from modules.db import db
 from modules.playback import play
 import datetime
 
+
 try:
     import pynotify
     notify = True
@@ -56,7 +57,7 @@ class main:
         
         #set pomodoros, if it gets to FOUR enables the full_break_time
         self.pomodoros = 0
-        self.time_break = False
+        self.active_break = False
         self.full_break = False
         self.thread_pid = 0
         #show or not the tasks tagged as done
@@ -296,21 +297,21 @@ class main:
         """
         Start the fucking timer....
         """
-        
+
         model, iter = self.tree_tasks.get_selection().get_selected()
            
-        if self.time_break:
+        if self.active_break:
             
             if self.full_break:
+                
                 self.full_break = False
                 self.startTime = time.time() + self.full_break_time
             else:
-                self.time_break = False
                 self.startTime = time.time() + self.half_break_time
                 
             self.thread_pid = gobject.timeout_add(10,self.run)
             
-        else:   
+        else:
             if self.thread_pid == 0 and model and iter:
                 self.alarm(self.alarms['inicio'])
                 self.lock_notify = None
@@ -319,7 +320,7 @@ class main:
                 self.thread_pid = gobject.timeout_add(10,self.run)
                 self.changeIcon('Normal',True)
             
-            
+
     def activate(self,obj,event):
         
         """Stupid ass name, i know, shame on me"""
@@ -339,7 +340,7 @@ class main:
         
         if file:
             
-            d = play(file)
+            play().play(file)
         
     def updateInfo(self,obj):
         
@@ -373,7 +374,7 @@ class main:
         if self.thread_pid != 0:
             self.lock_notify = False
             if obj:
-                self.time_break = False
+                self.active_break = False
             self.changeIcon('Normal')
             gobject.source_remove(self.thread_pid)
             self.label_clock.set_text("00:00")
@@ -425,7 +426,6 @@ class main:
         
     def finished(self):
         
-        
         """Here we define what will happen when the clocks hits 0"""
         
         
@@ -433,7 +433,7 @@ class main:
         self.lock_notify = False
         
         
-        if self.time_break:
+        if self.active_break:
             
             if self.pomodoros > 3:
                 self.full_break = True
@@ -443,10 +443,11 @@ class main:
                 
             
             self.changeIcon('Normal')
-            self.notifyIt('Descanso Acabou, volta a trabalhar vagabundo!')
             self.alarm(self.alarms['alarm'])
+            self.notifyIt('Descanso Acabou, volta a trabalhar vagabundo!')
             
-            self.time_break = False
+            
+            self.active_break = False
         else:
             
             pomodoros = db().getPomodoros(self.idAtivo) + 1
@@ -457,8 +458,10 @@ class main:
             self.changeIcon('Break',True)
             self.notifyIt('Iniciando pausa... 5 minutos, corre negada!.')
             self.alarm(self.alarms['pausacurta'])
-            self.time_break = True
+            self.active_break = True
             self.startTimer()
+            
+        
         
     
     def hideDoneTasks(self,obj=None):
@@ -495,7 +498,7 @@ class main:
             if self.lock_notify:
                 pass
             else:
-                if self.time_break:
+                if self.active_break:
                     self.lock_notify = True
                 else:
                     self.notifyIt('Faltam apenas 2 minutos')
@@ -506,4 +509,5 @@ class main:
         return True
         
 app = main()
+gtk.gdk.threads_init
 gtk.main()
