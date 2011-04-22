@@ -81,7 +81,7 @@ class main:
         self.list_tasks = gtk.ListStore(int,int,str,int,str)
         self.tree_tasks = self.w_gui.get_widget('listaTarefas')
         self.tree_tasks.set_model(self.list_tasks)
-        #self.tree_tasks.connect('button_press_event',self.menuPopup)
+        self.tree_tasks.connect('button_press_event',self.menuPopup)
         self.tree_tasks.set_search_column(2)
 
         
@@ -179,14 +179,71 @@ class main:
             
     def menuPopup(self,obj, event):
         
+        """
+        menuPopup, shows the menu for the treeview
+        """
+        
+        #if the mouse button isn't the Right button...pass
         if event.button != 3:
             pass
         else:
             
-            m = gtk.Menu()
-            i = gtk.MenuItem("Hello",self.deleteTask)
-            i.show()
-            m.append(i)
+            #getting the selected path
+            path = obj.get_path_at_pos(int(event.x),int(event.y))
+            
+            #getting the selection object from obj
+            selection = obj.get_selection()
+            
+            #getting the current selected rows,
+            #in this case it can't be higher than one
+            selected = selection.get_selected_rows()
+            
+            #if path dosen't exist, return None
+            if not path:
+                return None
+            
+            #if the path is not selected than select it.
+            if path[0] not in selected[1]:
+                
+                selection.unselect_all()
+                selection.select_path(path[0])
+                
+            #again if the count returns more than one IT WILL FAIL.
+            if selection.count_selected_rows() > 1:
+                pass
+            #if not show the menu
+            else:
+                
+                model, iter = selection.get_selected()
+                #get the current status of the task(done or to do);
+                done = model.get_value(iter,1)
+                
+                
+                m = gtk.Menu()
+                r_task = gtk.MenuItem("Remover Tarefa")
+                #if done is equal to one it means that the task is done
+                if done == 1:
+                    #show this then
+                    m_done = gtk.MenuItem("Desmarcar como feita")
+                else:
+                    #if not show this
+                    m_done = gtk.MenuItem("Marcar como feita")
+            
+            
+            #connecting the events.
+            m_done.connect('activate',self.setTaskDone)
+            r_task.connect('activate',self.deleteTask)
+            
+            
+            #showing all!
+            r_task.show()
+            m_done.show()
+            
+            #appending the menu itens
+            m.append(m_done)
+            m.append(r_task)
+            
+            #poping it up.
             m.popup(None, None, None, event.button, event.time, None)
             return False
         
