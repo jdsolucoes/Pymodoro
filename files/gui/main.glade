@@ -7,6 +7,8 @@
     <property name="resizable">False</property>
     <property name="window_position">center</property>
     <property name="icon">../img/pomodoro.png</property>
+    <property name="type_hint">utility</property>
+    <property name="skip_taskbar_hint">True</property>
     <signal name="destroy" handler="on_janelaPrincipal_destroy"/>
     <child>
       <widget class="GtkVBox" id="vbox1">
