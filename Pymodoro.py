@@ -14,7 +14,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Pymodoro.  If not, see <http://www.gnu.org/licenses/>.
 
-import time, pygtk, os, pango, gobject
+
+import time
+import pygtk
+import os
+import pango
+import gobject
 
 from modules.db import db
 from modules.playback import play
@@ -29,7 +34,6 @@ except:
     notify = None
 
 pygtk.require('2.0')
-
 import gtk
 from gtk import glade
 
@@ -40,71 +44,68 @@ class main:
     def __init__(self):
         
         #define the alarms wav files
-        
         self.alarms = {
+            
             '2minutes' : 'files/sound/2minuteswarning.wav',
             'inicio' : 'files/sound/inicio.wav',
             'alarm' : 'files/sound/alarm.wav',
             'pausacurta' : 'files/sound/5minutos.wav',
             'pausalonga' : 'files/sound/pausalonga.wav'
         }
-        
+
         #the default time in seconds, 25*60=1500 + 1
         self.time_seconds = 1501
+
         #half break (or 5 minutes break) 300s + 1
         self.half_break_time = 301
         self.full_break_time = 901
-        
+
         #set pomodoros, if it gets to FOUR enables the full_break_time
         self.pomodoros = 0
         self.active_break = False
         self.full_break = False
         self.thread_pid = 0
+
         #show or not the tasks tagged as done
         self.show_done_tasks = True
-        
+
         #POG, but works
         self.lock_notify = None
         self.filesDir = os.path.abspath('files')
         self.w_gui = glade.XML("%s/gui/main.glade" % self.filesDir)
         self.main_window = self.w_gui.get_widget('janelaPrincipal')
-        
+
         #here we defined the label that wiill show the time
         self.label_clock = self.w_gui.get_widget('labelClock')
-        
+
         #big fat ass font.
         self.label_clock.modify_font(pango.FontDescription("35"))
         self.label_clock.set_padding(10, 5)
         self.main_window.show()
-        
-        
+
         #the list itself.
         self.list_tasks = gtk.ListStore(int,int,str,int,str)
         self.tree_tasks = self.w_gui.get_widget('listaTarefas')
         self.tree_tasks.set_model(self.list_tasks)
         self.tree_tasks.connect('button_press_event',self.menuPopup)
-        self.tree_tasks.set_search_column(2)
-
-        
+        self.tree_tasks.set_search_column(2)        
         cell = gtk.CellRendererText()
         cell.set_property('strikethrough' , True)
         task_column = gtk.TreeViewColumn('Tarefa:')
         task_column.pack_start(cell,True)
         task_column.add_attribute(cell,'text',2)
         task_column.set_attributes(cell,text=2,strikethrough=1)
-        
-        
         self.tree_tasks.append_column(task_column)
-
+        
         #systray icon
         self.staticon = gtk.StatusIcon()
         self.staticon.connect("button_press_event", self.activate)
         self.staticon.set_from_file("files/img/pomodoro.png")
         self.staticon.set_tooltip("Pymodoro - Clique para Mostrar/Esconder")
+        self.staticon.set_visible(True)
         
+        #call populateTaskList()
         self.populateTaskList()
-        
-        self.staticon.set_visible(True) 
         
         #connecting the signals from GLADE/GTK to functions in python.
         signals = {
@@ -141,12 +142,12 @@ class main:
         
         return None
     
+    
     def deleteTask(self, obj=None):
         
         """
         Get the current selected task and remove it
         """
-        
         
         model, iter = self.tree_tasks.get_selection().get_selected()
         
@@ -159,6 +160,7 @@ class main:
             return True
         else:
             return None
+        
             
     def setTaskDone(self,obj=None):
         
@@ -178,8 +180,9 @@ class main:
                 db().update('tarefas',id,concluido=1)
             self.populateTaskList()
             
+            
     def menuPopup(self,obj, event):
-        
+
         """
         menuPopup, shows the menu for the treeview
         """
@@ -191,35 +194,26 @@ class main:
             
             #getting the selected path
             path = obj.get_path_at_pos(int(event.x),int(event.y))
-            
             #getting the selection object from obj
             selection = obj.get_selection()
-            
             #getting the current selected rows,
             #in this case it can't be higher than one
             selected = selection.get_selected_rows()
-            
             #if path dosen't exist, return None
             if not path:
                 return None
-            
             #if the path is not selected than select it.
             if path[0] not in selected[1]:
-                
                 selection.unselect_all()
                 selection.select_path(path[0])
-                
             #again if the count returns more than one IT WILL FAIL.
             if selection.count_selected_rows() > 1:
                 pass
             #if not show the menu
             else:
-                
                 model, iter = selection.get_selected()
                 #get the current status of the task(done or to do);
                 done = model.get_value(iter,1)
-                
-                
                 m = gtk.Menu()
                 r_task = gtk.MenuItem("Remover Tarefa")
                 #if done is equal to one it means that the task is done
@@ -229,12 +223,10 @@ class main:
                 else:
                     #if not show this
                     m_done = gtk.MenuItem("Marcar como feita")
-            
-            
+                    
             #connecting the events.
             m_done.connect('activate',self.setTaskDone)
             r_task.connect('activate',self.deleteTask)
-            
             
             #showing all!
             r_task.show()
@@ -247,6 +239,7 @@ class main:
             #poping it up.
             m.popup(None, None, None, event.button, event.time, None)
             return False
+        
         
     def markDays (self,obj=None):
         
@@ -261,8 +254,8 @@ class main:
         dias = db().getByDate(None,month)
         for i in dias:
             calendario.mark_day(i[4].day)
-        
-        
+            
+            
     def populateTaskList(self,obj=None):
         
         """
@@ -271,7 +264,6 @@ class main:
         """
         
         cc = self.w_gui.get_widget('calendario')
-        
         year, month, day = cc.get_date()
         #the gtk calendar aways return the month wrong, adding 1... POG?
         month = month + 1
@@ -287,11 +279,9 @@ class main:
                 pass
             else:
                 self.list_tasks.append(i)
-        self.markDays()            
+        self.markDays()
         
         
-        
-    
     def startTimer(self, *args):
         
         """
@@ -300,15 +290,12 @@ class main:
 
         model, iter = self.tree_tasks.get_selection().get_selected()
            
-        if self.active_break:
-            
+        if self.active_break:    
             if self.full_break:
-                
                 self.full_break = False
                 self.startTime = time.time() + self.full_break_time
             else:
                 self.startTime = time.time() + self.half_break_time
-                
             self.thread_pid = gobject.timeout_add(10,self.run)
             
         else:
@@ -319,28 +306,28 @@ class main:
                 self.startTime = time.time() + self.time_seconds
                 self.thread_pid = gobject.timeout_add(10,self.run)
                 self.changeIcon('Normal',True)
-            
-
+                
+                
     def activate(self,obj,event):
         
         """Stupid ass name, i know, shame on me"""
+        
         if event.button == 3:
             self.stopTimer()
         else:
-            if (self.main_window.flags() & gtk.VISIBLE) != 0:
-            
+            if (self.main_window.flags() & gtk.VISIBLE) != 0:    
                 self.main_window.hide()
             else:
                 self.main_window.show()
             
-            
+
     def alarm(self,file=None):
         
         """Play a sound file"""
         
-        if file:
-            
+        if file:            
             play().play(file)
+            
         
     def updateInfo(self,obj):
         
@@ -349,11 +336,7 @@ class main:
         """
         
         model, iter = obj.get_selection().get_selected()
-        
         if iter:
-            
-            
-            
             id = model.get_value(iter,0)
             row = db().getByID(id)
             data = datetime.datetime.strftime(row[4],'%d/%m/%Y')
@@ -366,11 +349,11 @@ class main:
             else:
                 self.w_gui.get_widget('labelStatus').set_text('Não')
                 
-        
-        
+
     def stopTimer(self, obj=None):
 
         """Stop the timer"""
+        
         if self.thread_pid != 0:
             self.lock_notify = False
             if obj:
@@ -381,22 +364,19 @@ class main:
             self.startTime = time.time()
             self.thread_pid = 0
             
-            
 
     def notifyIt(self,msg=None):
         
         """Use pynotify to emit a notification, looks great in ubuntu"""
         
         if notify and msg:
-            if pynotify.init('Pymodoro'):
-                
+            if pynotify.init('Pymodoro'):                
                 n = pynotify.Notification('Pymodoro', msg,'files/img/pomodoro.png')
                 n.attach_to_status_icon(self.staticon)
                 n.show()
                 
                 return True
         else:
-            
             return None
                 
     def changeIcon(self,icon=None,blinking=None):
@@ -404,21 +384,16 @@ class main:
         """Use the change the status of the icon, blinking or not, Normal or
         break time"""
         
-        
         if icon:
             if icon == 'Normal':
                 self.staticon.set_from_file("files/img/pomodoro.png")
                 
             elif icon == 'Break':
-                self.staticon.set_from_file("files/img/pomodoro-break.png")
-                
+                self.staticon.set_from_file("files/img/pomodoro-break.png")        
             else:
                 return None
-            
             if blinking:
-                
                 self.staticon.set_blinking(True)
-            
             else:
                 self.staticon.set_blinking(False)
                 
@@ -428,42 +403,31 @@ class main:
         
         """Here we define what will happen when the clocks hits 0"""
         
-        
         self.stopTimer()
         self.lock_notify = False
         
-        
         if self.active_break:
-            
             if self.pomodoros > 3:
                 self.full_break = True
                 self.pomodoros = 0
             else:
-                self.pomodoros += 1
-                
-            
+                self.pomodoros += 1    
             self.changeIcon('Normal')
             self.alarm(self.alarms['alarm'])
             self.notifyIt('Descanso Acabou, volta a trabalhar vagabundo!')
-            
-            
             self.active_break = False
         else:
-            
             pomodoros = db().getPomodoros(self.idAtivo) + 1
             self.w_gui.get_widget('labelPomodoros').set_text(str(pomodoros))
             db().update('tarefas',self.idAtivo,pomodoros=pomodoros)
             self.pomodoros = self.pomodoros + 1
-            
             self.changeIcon('Break',True)
             self.notifyIt('Iniciando pausa... 5 minutos, corre negada!.')
             self.alarm(self.alarms['pausacurta'])
             self.active_break = True
             self.startTimer()
             
-        
-        
-    
+            
     def hideDoneTasks(self,obj=None):
         
         """Hidden the tasks tagged as done"""
@@ -472,7 +436,6 @@ class main:
             self.show_done_tasks = True
         else:
             self.show_done_tasks = False
-        
         self.populateTaskList()
 
     
@@ -482,19 +445,12 @@ class main:
         
         diff_time =  self.startTime - time.time()
         (minutes, seconds) = divmod(diff_time, 60.0)
-        
         if int(diff_time) == 0:
-            
             self.finished()
             return False
-    
         else:
-        
             self.label_clock.set_text("%02i:%02i" % (minutes,seconds))
-            
-        
         if int(diff_time) < 120:
-            
             if self.lock_notify:
                 pass
             else:
@@ -504,10 +460,9 @@ class main:
                     self.notifyIt('Faltam apenas 2 minutos')
                     self.alarm(self.alarms['2minutes'])
                     self.lock_notify = True
-        
-        
         return True
-        
+
+
 app = main()
 gtk.gdk.threads_init
 gtk.main()

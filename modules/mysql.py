@@ -32,6 +32,5 @@ class db(AbstractSQL):
             self.cursor = self.db.cursor()
             return True
         except:
-            
             return False
    

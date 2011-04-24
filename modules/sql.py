@@ -33,16 +33,13 @@ class AbstractSQL:
     
     def getByID(self,id=None):
         
+        """Get all from tarefas where ID = ID"""
+        
         if id:
-            
             self.cursor.execute("SELECT * FROM `tarefas` WHERE id = '%s' " % id )
-            
             return self.cursor.fetchone()
             
-            
-            
-            
-        
+
     def getByDate(self,day=None,month=None,year=None):
         
         """Recives an day, month and year and returns everything that founds"""
@@ -62,6 +59,7 @@ class AbstractSQL:
 
         self.cursor.execute(sql)
         return self.cursor.fetchall()
+
         
     def update(self,table=None,id=None,**kwargs):
         
@@ -78,6 +76,7 @@ class AbstractSQL:
 
         sql = ''.join(["UPDATE `%s` " % table,a,where])
         self.cursor.execute(sql)
+
     
     def remove(self,table=None,id=None):
         
@@ -87,8 +86,7 @@ class AbstractSQL:
             
             self.cursor.execute("DELETE FROM `%s` WHERE `id` = %s" % (table,id))
             
-                
-            
+   
     def insert(self,table=None,**kwargs):
         
         """Insert data in to the DB, receives a table and the data namecolumn=datatostore"""
@@ -112,8 +110,4 @@ class AbstractSQL:
         
         self.cursor.close()
         self.db.close()
-        
-        
-
-        
         
