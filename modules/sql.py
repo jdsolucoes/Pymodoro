@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 #-*- coding: utf-8 -*-
 #   This file is part of Pymodoro.
 
@@ -43,7 +43,8 @@ class AbstractSQL:
     def getByDate(self,day=None,month=None,year=None):
         
         """Recives an day, month and year and returns everything that founds"""
-        
+
+
         sql = "SELECT * FROM `tarefas` WHERE "
         termo = []
         if day:
