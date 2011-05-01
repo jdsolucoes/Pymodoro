@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 #-*- coding: utf-8 -*-
 #   This file is part of Pymodoro.
 
@@ -24,7 +24,6 @@ import gobject
 from modules.db import db
 from modules.playback import play
 import datetime
-
 
 try:
     import pynotify
@@ -71,7 +70,7 @@ class main:
 
         #POG, but works
         self.lock_notify = None
-        self.filesDir = os.path.abspath('files')
+        self.filesDir = os.path.realpath('files')
         self.w_gui = glade.XML("%s/gui/main.glade" % self.filesDir)
         self.main_window = self.w_gui.get_widget('janelaPrincipal')
 
@@ -249,12 +248,19 @@ class main:
         
         calendario = self.w_gui.get_widget('calendario')
         calendario.clear_marks()
-        year, month, day = calendario.get_date()
-        month += 1
+        day, month, year = self.getCalendar()
         dias = db().getByDate(None,month)
         for i in dias:
             calendario.mark_day(i[4].day)
             
+    def getCalendar(self):
+        
+        cc = self.w_gui.get_widget('calendario')
+        year, month, day = cc.get_date()
+        month += 1
+        day = "%02d" % day
+        
+        return day,month,year
             
     def populateTaskList(self,obj=None):
         
@@ -263,10 +269,8 @@ class main:
         and then calls self.markDays()
         """
         
-        cc = self.w_gui.get_widget('calendario')
-        year, month, day = cc.get_date()
-        #the gtk calendar aways return the month wrong, adding 1... POG?
-        month = month + 1
+        
+        day,month,year = self.getCalendar()
         tasks = db().getListOfTasks(day,month,year)
         
         #remove all items on the list
@@ -275,8 +279,9 @@ class main:
             
         #append new ones.
         for i in tasks:
-            if not self.show_done_tasks and i[1] ==1:
+            if not self.show_done_tasks and i[1] == 1:
                 pass
+            
             else:
                 self.list_tasks.append(i)
         self.markDays()
@@ -370,8 +375,8 @@ class main:
         """Use pynotify to emit a notification, looks great in ubuntu"""
         
         if notify and msg:
-            if pynotify.init('Pymodoro'):                
-                n = pynotify.Notification('Pymodoro', msg,'files/img/pomodoro.png')
+            if pynotify.init('Pymodoro'):
+                n = pynotify.Notification('Pymodoro', msg, "%s/img/pomodoro.png" % self.filesDir)
                 n.attach_to_status_icon(self.staticon)
                 n.show()
                 
@@ -389,7 +394,7 @@ class main:
                 self.staticon.set_from_file("files/img/pomodoro.png")
                 
             elif icon == 'Break':
-                self.staticon.set_from_file("files/img/pomodoro-break.png")        
+                self.staticon.set_from_file("./files/img/pomodoro-break.png")        
             else:
                 return None
             if blinking:
@@ -407,6 +412,7 @@ class main:
         self.lock_notify = False
         
         if self.active_break:
+            
             if self.pomodoros > 3:
                 self.full_break = True
                 self.pomodoros = 0
@@ -416,7 +422,9 @@ class main:
             self.alarm(self.alarms['alarm'])
             self.notifyIt('Descanso Acabou, volta a trabalhar vagabundo!')
             self.active_break = False
+            
         else:
+            
             pomodoros = db().getPomodoros(self.idAtivo) + 1
             self.w_gui.get_widget('labelPomodoros').set_text(str(pomodoros))
             db().update('tarefas',self.idAtivo,pomodoros=pomodoros)
@@ -450,16 +458,20 @@ class main:
             return False
         else:
             self.label_clock.set_text("%02i:%02i" % (minutes,seconds))
+            
         if int(diff_time) < 120:
+            
             if self.lock_notify:
                 pass
             else:
                 if self.active_break:
                     self.lock_notify = True
                 else:
+                    
                     self.notifyIt('Faltam apenas 2 minutos')
                     self.alarm(self.alarms['2minutes'])
                     self.lock_notify = True
+                    
         return True
 
 
