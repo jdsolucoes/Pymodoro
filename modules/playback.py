@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 #-*- coding: utf-8 -*-
 #   This file is part of Pymodoro.
 
@@ -21,16 +21,12 @@ import threading
 import gtk
 
 class play(threading.Thread):
-    
+
     def play(self,file=None):
         if file:
             self.file = file
         self.start()
-        
-    def run (self):
-        
-        d = commands.getoutput('mplayer -quiet %s' % self.file)
-        
-    
 
-    
+    def run (self):
+        d = commands.getoutput('mplayer -quiet %s' % self.file)
+
