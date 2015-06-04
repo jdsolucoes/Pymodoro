@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import config
 from datetime import datetime
-
-try:
-    exec("from %s import db as backend" % config.db_config['backend'])
-except:
-    print "Erro eo importar modulo %s\n" % config.db_config['backend']
-    exit(1)
+from sqlite import db as backend
 
 
 class db(backend):
@@ -21,14 +16,14 @@ class db(backend):
     def getListOfTasks(self, day, month, year):
         """Return a list of tasks"""
         if day and month and year:
-            return self.getByDate(day,month,year)
+            return self.getByDate(day, month, year)
         else:
-            return none
+            return None
 
-    def removeTask(self,id=None):
+    def removeTask(self, id=None):
         """"Remove a task"""
         if id:
-            self.remove('tarefas',id)
+            self.remove('tarefas', id)
 
     def newTask(self, tarefa=None):
         """Create a new Task"""
@@ -40,15 +35,15 @@ class db(backend):
     def getPomodoros(self, id=None):
         """Return the amount of pomodoros of that task"""
         if id:
-            c = self.getAll('tarefas',id=id)[0][3]
+            c = self.getAll('tarefas', id=id)[0][3]
             return c
         else:
             return None
 
-    def updatePomodoro(self,id=None,pomodoro=None):
+    def updatePomodoro(self, id=None, pomodoro=None):
         """Update the amount of pomodoros of a task"""
         if id and pomodoro:
-            self.update('tarefas',id,pomodoros=pomodoro)
+            self.update('tarefas', id, pomodoros=pomodoro)
 
     def __del__(self):
         self.disconnect()
